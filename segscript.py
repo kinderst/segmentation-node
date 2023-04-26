@@ -229,6 +229,8 @@ with torch.cuda.amp.autocast(enabled=True):
         if frame is None or current_frame_index > frames_to_propagate:
             break
 
+        print('memory allocated: ', torch.cuda.memory_allocated())
+        print('max memory: ', torch.cuda.max_memory_allocated())
         print('emptying cache')
         torch.cuda.empty_cache()
         # convert numpy array to pytorch tensor format
