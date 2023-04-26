@@ -121,8 +121,6 @@ def decode_segmentation_masks(mask, colormap_param, n_classes):
     rgb = np.stack([r, g, b], axis=2)
     return rgb
 
-print('device count:')
-print(torch.cuda.device_count())
 
 if torch.cuda.is_available():
     print('Using GPU')
@@ -146,9 +144,7 @@ config = {
     'max_long_term_elements': 10000,
 }
 
-network = XMem(config, './saves/XMem.pth').eval()
-network = torch.nn.DataParallel(network)
-network.to(device)
+network = XMem(config, './saves/XMem.pth').eval().to(device)
 
 # Loading the Colormap
 colormap = loadmat(
@@ -253,6 +249,9 @@ with torch.cuda.amp.autocast(enabled=True):
             visualization = overlay_davis(frame, prediction)
             # Write the frame to the video file (must be square so write middle)
             out.write(visualization)
+
+        if current_frame_index % 5 == 0:
+            torch.cuda.empty_cache()
 
         current_frame_index += 1
 out.release()
