@@ -1,5 +1,5 @@
 import torch
-
+import gc
 import os
 from os import path
 from argparse import ArgumentParser
@@ -208,7 +208,7 @@ cv2.destroyAllWindows()
 
 #clean up model cause we dont need any more
 del model
-
+gc.collect()
 torch.cuda.empty_cache()
 
 processor = InferenceCore(network, config=config)
@@ -231,6 +231,8 @@ current_frame_index = 0
 # print('emptying cache')
 # torch.cuda.reset_max_memory_allocated()
 # print('memory allocated after: ', torch.cuda.memory_allocated())
+print('initial summary')
+print(torch.cuda.memory_summary(device=device, abbreviated=False))
 
 with torch.cuda.amp.autocast(enabled=True):
     while (cap.isOpened()):
@@ -269,6 +271,7 @@ with torch.cuda.amp.autocast(enabled=True):
             out.write(visualization)
 
         del frame_torch
+        gc.collect()
         current_frame_index += 1
 out.release()
 cv2.destroyAllWindows()
