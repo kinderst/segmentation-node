@@ -5,6 +5,9 @@ from os import path
 from argparse import ArgumentParser
 import shutil
 import requests
+import urllib.request
+import json
+import pika
 
 import torch
 import torch.nn.functional as F
@@ -37,6 +40,16 @@ from deeplabutils import DeeplabV3Plus
 from deeplabutils import read_single_img
 from deeplabutils import infer
 from deeplabutils import decode_segmentation_masks
+
+
+def setup_rabbitmq_parameters(username, password, host, port, virtual_host):
+    credentials = pika.PlainCredentials(username, password)
+    return pika.ConnectionParameters(host=host, port=port, credentials=credentials)
+
+def create_rabbitmq_channel(parameters):
+    connection = pika.BlockingConnection(parameters)
+    return connection.channel()
+
 
 
 credentials_dict = {
@@ -108,114 +121,137 @@ model.load_weights('./deeplabv3weights.h5')
 # print(np.unique(mask))
 # num_objects = len(np.unique(mask)) - 1
 
-url = "https://storage.googleapis.com/team-seven-bucket/peoplestation.mp4"  # Replace with the actual URL of the video
-filename = "theinputagain.mp4"  # Replace with the desired name of the video file
+def real_callback():
+    url = "https://storage.googleapis.com/team-seven-bucket/peoplestation.mp4"  # Replace with the actual URL of the video
+    filename = "theinputagain.mp4"  # Replace with the desired name of the video file
 
-response = requests.get(url)
-if response.status_code == 200:
-    with open(filename, "wb") as f:
-        f.write(response.content)
-        print(f"Video saved as {filename}")
-else:
-    print("Failed to download video")
+    response = requests.get(url)
+    if response.status_code == 200:
+        with open(filename, "wb") as f:
+            f.write(response.content)
+            print(f"Video saved as {filename}")
+    else:
+        print("Failed to download video")
 
-input_file_name = './' + filename
-output_file_name = 'fromscriptdownloadagain.avi'
+    input_file_name = './' + filename
+    output_file_name = 'fromscriptdownloadagain.avi'
 
-torch.cuda.empty_cache()
+    torch.cuda.empty_cache()
 
-#maybe get mask here, run thru video for one frame, do mask op
-cap = cv2.VideoCapture(input_file_name)
-current_frame_index = 0
-while (cap.isOpened()):
-    # load frame-by-frame
-    _, frame = cap.read()
-    frame = frame[:IMAGE_SIZE, :IMAGE_SIZE, :]
-    if frame is None or current_frame_index > 0:
-        break
-
-    if current_frame_index == 0:
-        image_tensor = read_single_img(frame)
-        prediction_mask = infer(image_tensor=image_tensor, model=model)
-        mask = decode_segmentation_masks(prediction_mask, colormap, 20)
-        unique_colors = np.unique(mask.reshape(-1, mask.shape[2]), axis=0)
-        colormap = {}
-        for i in range(len(unique_colors)):
-            colormap[tuple(unique_colors[i])] = i
-
-        # Replace each pixel in the image with its corresponding colormap value
-        for i in range(mask.shape[0]):
-            for j in range(mask.shape[1]):
-                mask[i,j] = colormap[tuple(mask[i,j])]
-        flat_img = Image.fromarray(mask[:,:,0], mode='L')
-        mask = np.array(flat_img)
-        print('mask info:!')
-        print(mask.shape)
-        print(np.unique(mask))
-        num_objects = len(np.unique(mask)) - 1
-    current_frame_index += 1
-
-cv2.destroyAllWindows()
-
-
-# Define the codec and create VideoWriter object
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec to be used
-out = cv2.VideoWriter(output_file_name, cv2.VideoWriter_fourcc(*'MJPG'), 10.0, (IMAGE_SIZE, IMAGE_SIZE))  # Video file output name, codec, fps, and frame size
-
-torch.cuda.empty_cache()
-
-processor = InferenceCore(network, config=config)
-processor.set_all_labels(range(1, num_objects+1))  # consecutive labels
-cap = cv2.VideoCapture(input_file_name)
-
-# You can change these two numbers
-frames_to_propagate = 120
-visualize_every = 1
-
-current_frame_index = 0
-
-with torch.cuda.amp.autocast(enabled=True):
+    #maybe get mask here, run thru video for one frame, do mask op
+    cap = cv2.VideoCapture(input_file_name)
+    current_frame_index = 0
     while (cap.isOpened()):
         # load frame-by-frame
         _, frame = cap.read()
         frame = frame[:IMAGE_SIZE, :IMAGE_SIZE, :]
-        print(frame.shape)
-        if frame is None or current_frame_index > frames_to_propagate:
+        if frame is None or current_frame_index > 0:
             break
 
-        # convert numpy array to pytorch tensor format
-        frame_torch, _ = image_to_torch(frame, device=device)
-        print(frame_torch.shape)
         if current_frame_index == 0:
-            # initialize with the mask
-            mask_torch = index_numpy_to_one_hot_torch(mask, num_objects+1).to(device)
-            print(mask_torch.shape)
-            # the background mask is not fed into the model
-            prediction = processor.step(frame_torch, mask_torch[1:])
-        else:
-            # propagate only
-            prediction = processor.step(frame_torch)
+            image_tensor = read_single_img(frame)
+            prediction_mask = infer(image_tensor=image_tensor, model=model)
+            mask = decode_segmentation_masks(prediction_mask, colormap, 20)
+            unique_colors = np.unique(mask.reshape(-1, mask.shape[2]), axis=0)
+            colormap = {}
+            for i in range(len(unique_colors)):
+                colormap[tuple(unique_colors[i])] = i
 
-        # argmax, convert to numpy
-        prediction = torch_prob_to_numpy_mask(prediction)
-
-        if current_frame_index % visualize_every == 0:
-            visualization = overlay_davis(frame, prediction)
-            #display(Image.fromarray(visualization))
-            # Write the frame to the video file (must be square so write middle)
-            out.write(visualization)
-        cv2.waitKey(10)
+            # Replace each pixel in the image with its corresponding colormap value
+            for i in range(mask.shape[0]):
+                for j in range(mask.shape[1]):
+                    mask[i,j] = colormap[tuple(mask[i,j])]
+            flat_img = Image.fromarray(mask[:,:,0], mode='L')
+            mask = np.array(flat_img)
+            print('mask info:!')
+            print(mask.shape)
+            print(np.unique(mask))
+            num_objects = len(np.unique(mask)) - 1
         current_frame_index += 1
-out.release()
-cv2.destroyAllWindows()
 
-print('writing to bucket')
-blob = bucket.blob(output_file_name)
-blob.upload_from_filename(output_file_name)
+    cv2.destroyAllWindows()
 
-print('deleting from local storage')
-os.remove(input_file_name)
-os.remove(output_file_name)
+
+    # Define the codec and create VideoWriter object
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec to be used
+    out = cv2.VideoWriter(output_file_name, cv2.VideoWriter_fourcc(*'MJPG'), 10.0, (IMAGE_SIZE, IMAGE_SIZE))  # Video file output name, codec, fps, and frame size
+
+    torch.cuda.empty_cache()
+
+    processor = InferenceCore(network, config=config)
+    processor.set_all_labels(range(1, num_objects+1))  # consecutive labels
+    cap = cv2.VideoCapture(input_file_name)
+
+    # You can change these two numbers
+    frames_to_propagate = 120
+    visualize_every = 1
+
+    current_frame_index = 0
+
+    with torch.cuda.amp.autocast(enabled=True):
+        while (cap.isOpened()):
+            # load frame-by-frame
+            _, frame = cap.read()
+            frame = frame[:IMAGE_SIZE, :IMAGE_SIZE, :]
+            print(frame.shape)
+            if frame is None or current_frame_index > frames_to_propagate:
+                break
+
+            # convert numpy array to pytorch tensor format
+            frame_torch, _ = image_to_torch(frame, device=device)
+            print(frame_torch.shape)
+            if current_frame_index == 0:
+                # initialize with the mask
+                mask_torch = index_numpy_to_one_hot_torch(mask, num_objects+1).to(device)
+                print(mask_torch.shape)
+                # the background mask is not fed into the model
+                prediction = processor.step(frame_torch, mask_torch[1:])
+            else:
+                # propagate only
+                prediction = processor.step(frame_torch)
+
+            # argmax, convert to numpy
+            prediction = torch_prob_to_numpy_mask(prediction)
+
+            if current_frame_index % visualize_every == 0:
+                visualization = overlay_davis(frame, prediction)
+                #display(Image.fromarray(visualization))
+                # Write the frame to the video file (must be square so write middle)
+                out.write(visualization)
+            cv2.waitKey(10)
+            current_frame_index += 1
+    out.release()
+    cv2.destroyAllWindows()
+
+    print('writing to bucket')
+    blob = bucket.blob(output_file_name)
+    blob.upload_from_filename(output_file_name)
+
+    print('deleting from local storage')
+    os.remove(input_file_name)
+    os.remove(output_file_name)
+
+
+rabbitmq_params = setup_rabbitmq_parameters('seven', 'supersecret', '34.123.41.144', '5672', '')
+
+channel = create_rabbitmq_channel(rabbitmq_params)
+print('channel created')
+
+# create a queue
+channel.queue_declare(queue='test-queue', durable=True)
+print('queue declared')
+
+
+# define callback function
+def callback(ch, method, properties, body):
+    req = body.decode('utf-8')
+    print("Received message:", body.decode('utf-8'))
+
+
+# start consuming messages
+channel.basic_consume(queue='test-queue', on_message_callback=callback, auto_ack=True)
+print('Waiting for messages...')
+channel.start_consuming()
 
 # num_objects = None
 # mask = None
