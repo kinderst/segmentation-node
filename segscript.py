@@ -56,8 +56,14 @@ def create_rabbitmq_channel(parameters):
     return connection.channel()
 
 
+google_json = None
+# Open the JSON file for reading
+with open('./google-creds.json', 'r') as f:
+    # Parse the JSON data from the file into a dictionary
+    google_json = json.load(f)
+
 google_credentials = ServiceAccountCredentials.from_json_keyfile_dict(
-    './google-creds.json'
+    google_json
 )
 client = storage.Client(credentials=google_credentials, project='single-verve-376219')
 bucket = client.get_bucket('team-seven-bucket')
