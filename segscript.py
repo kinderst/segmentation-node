@@ -245,6 +245,8 @@ with torch.cuda.amp.autocast(enabled=True):
 
         print('emptying cache')
         torch.cuda.empty_cache()
+        print('initial summary')
+        print(torch.cuda.memory_summary(device=device, abbreviated=False))
 
         # convert numpy array to pytorch tensor format
         frame_torch, _ = image_to_torch(frame, device=device)
@@ -275,5 +277,3 @@ with torch.cuda.amp.autocast(enabled=True):
         current_frame_index += 1
 out.release()
 cv2.destroyAllWindows()
-
-torch.cuda.empty_cache()
