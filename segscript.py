@@ -4,6 +4,7 @@ import os
 from os import path
 from argparse import ArgumentParser
 import shutil
+import requests
 
 import torch
 import torch.nn.functional as F
@@ -193,8 +194,19 @@ model.load_weights('./deeplabv3weights.h5')
 # print(np.unique(mask))
 # num_objects = len(np.unique(mask)) - 1
 
-input_file_name = './peoplestation.mp4'
-output_file_name = 'fromscript.avi'
+url = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"  # Replace with the actual URL of the video
+filename = "theinput.mp4"  # Replace with the desired name of the video file
+
+response = requests.get(url)
+if response.status_code == 200:
+    with open(filename, "wb") as f:
+        f.write(response.content)
+        print(f"Video saved as {filename}")
+else:
+    print("Failed to download video")
+
+input_file_name = './' + filename
+output_file_name = 'fromscriptdownload.avi'
 
 torch.cuda.empty_cache()
 
