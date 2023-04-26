@@ -229,6 +229,8 @@ with torch.cuda.amp.autocast(enabled=True):
         if frame is None or current_frame_index > frames_to_propagate:
             break
 
+        print('emptying cache')
+        torch.cuda.empty_cache()
         # convert numpy array to pytorch tensor format
         frame_torch, _ = image_to_torch(frame, device=device)
         print(frame_torch.shape)
@@ -249,11 +251,8 @@ with torch.cuda.amp.autocast(enabled=True):
             visualization = overlay_davis(frame, prediction)
             #display(Image.fromarray(visualization))
             # Write the frame to the video file (must be square so write middle)
+            print('visualization shape: ', visualization.shape)
             out.write(visualization)
-
-        if current_frame_index % 2 == 0:
-            print('emptying cache')
-            torch.cuda.empty_cache()
 
         current_frame_index += 1
 out.release()
