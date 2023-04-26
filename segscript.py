@@ -121,9 +121,12 @@ def decode_segmentation_masks(mask, colormap_param, n_classes):
     rgb = np.stack([r, g, b], axis=2)
     return rgb
 
+print('device count:')
+print(torch.cuda.device_count())
+
 if torch.cuda.is_available():
     print('Using GPU')
-    device = 'cuda:0,1'
+    device = 'cuda'
 else:
     print('CUDA not available. Please connect to a GPU instance if possible.')
     device = 'cpu'
@@ -143,7 +146,7 @@ config = {
     'max_long_term_elements': 10000,
 }
 
-network = XMem(config, './saves/XMem.pth').eval().to(device)
+network = torch.nn.DataParallel(XMem(config, './saves/XMem.pth').eval()).to(device)
 
 # Loading the Colormap
 colormap = loadmat(
