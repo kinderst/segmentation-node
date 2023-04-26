@@ -123,7 +123,7 @@ def decode_segmentation_masks(mask, colormap_param, n_classes):
 
 if torch.cuda.is_available():
     print('Using GPU')
-    device = 'cuda'
+    device = 'cuda:0,1'
 else:
     print('CUDA not available. Please connect to a GPU instance if possible.')
     device = 'cpu'
