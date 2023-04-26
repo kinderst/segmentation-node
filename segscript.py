@@ -251,6 +251,7 @@ with torch.cuda.amp.autocast(enabled=True):
             out.write(visualization)
 
         if current_frame_index % 5 == 0:
+            print('emptying cache')
             torch.cuda.empty_cache()
 
         current_frame_index += 1
