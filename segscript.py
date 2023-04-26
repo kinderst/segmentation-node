@@ -100,12 +100,12 @@ config = {
 
 network = XMem(config, './saves/XMem.pth').eval().to(device)
 
-# Loading the Colormap
-colormap = loadmat(
-    "./deeplab_colormap.mat"
-)["colormap"]
-colormap = colormap * 100
-colormap = colormap.astype(np.uint8)
+# # Loading the Colormap
+# colormap = loadmat(
+#     "./deeplab_colormap.mat"
+# )["colormap"]
+# colormap = colormap * 100
+# colormap = colormap.astype(np.uint8)
 
 IMAGE_SIZE = 512
 NUM_CLASSES = 20
@@ -157,6 +157,12 @@ def real_callback(ch, method, properties, body):
         if current_frame_index == 0:
             image_tensor = read_single_img(frame)
             prediction_mask = infer(image_tensor=image_tensor, model=model)
+            # Loading the Colormap
+            colormap = loadmat(
+                "./deeplab_colormap.mat"
+            )["colormap"]
+            colormap = colormap * 100
+            colormap = colormap.astype(np.uint8)
             mask = decode_segmentation_masks(prediction_mask, colormap, 20)
             unique_colors = np.unique(mask.reshape(-1, mask.shape[2]), axis=0)
             colormap = {}
