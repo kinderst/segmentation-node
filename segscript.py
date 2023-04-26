@@ -220,6 +220,12 @@ end_col = start_col + 512
 
 current_frame_index = 0
 
+print('memory allocated before: ', torch.cuda.memory_allocated())
+print('max memory: ', torch.cuda.max_memory_allocated())
+print('emptying cache')
+torch.cuda.reset_max_memory_allocated()
+print('memory allocated after: ', torch.cuda.memory_allocated())
+
 with torch.cuda.amp.autocast(enabled=True):
     while (cap.isOpened()):
         # load frame-by-frame
