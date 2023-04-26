@@ -177,7 +177,7 @@ model.load_weights('./deeplabv3weights.h5')
 torch.cuda.empty_cache()
 
 #maybe get mask here, run thru video for one frame, do mask op
-cap = cv2.VideoCapture('./summervid.mp4')
+cap = cv2.VideoCapture('./peoplestation.mp4')
 current_frame_index = 0
 while (cap.isOpened()):
     # load frame-by-frame
@@ -214,16 +214,16 @@ cv2.destroyAllWindows()
 
 # Define the codec and create VideoWriter object
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec to be used
-out = cv2.VideoWriter('realtryvid.mp4', fourcc, 20.0, (IMAGE_SIZE, IMAGE_SIZE))  # Video file output name, codec, fps, and frame size
+out = cv2.VideoWriter('realtryvidthirty.mp4', fourcc, 30.0, (IMAGE_SIZE, IMAGE_SIZE))  # Video file output name, codec, fps, and frame size
 
 torch.cuda.empty_cache()
 
 processor = InferenceCore(network, config=config)
 processor.set_all_labels(range(1, num_objects+1))  # consecutive labels
-cap = cv2.VideoCapture('./summervid.mp4')
+cap = cv2.VideoCapture('./peoplestation.mp4')
 
 # You can change these two numbers
-frames_to_propagate = 40
+frames_to_propagate = 60
 visualize_every = 1
 
 current_frame_index = 0
