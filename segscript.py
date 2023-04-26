@@ -251,7 +251,7 @@ with torch.cuda.amp.autocast(enabled=True):
             # Write the frame to the video file (must be square so write middle)
             out.write(visualization)
 
-        if current_frame_index % 5 == 0:
+        if current_frame_index % 2 == 0:
             print('emptying cache')
             torch.cuda.empty_cache()
 
