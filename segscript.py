@@ -129,9 +129,11 @@ else:
     print('CUDA not available. Please connect to a GPU instance if possible.')
     device = 'cpu'
 
+device = 'cpu'
+
 # set the amount of GPU memory to be used
-torch.cuda.set_per_process_memory_fraction(0.9)
-torch.backends.cuda.max_split_size_mb = 256
+# torch.cuda.set_per_process_memory_fraction(0.9)
+# torch.backends.cuda.max_split_size_mb = 256
 
 torch.set_grad_enabled(False)
 
@@ -231,8 +233,8 @@ current_frame_index = 0
 # print('emptying cache')
 # torch.cuda.reset_max_memory_allocated()
 # print('memory allocated after: ', torch.cuda.memory_allocated())
-print('initial summary')
-print(torch.cuda.memory_summary(device=device, abbreviated=False))
+# print('initial summary')
+# print(torch.cuda.memory_summary(device=device, abbreviated=False))
 
 with torch.cuda.amp.autocast(enabled=True):
     while (cap.isOpened()):
@@ -242,11 +244,6 @@ with torch.cuda.amp.autocast(enabled=True):
         print(frame.shape)
         if frame is None or current_frame_index > frames_to_propagate:
             break
-
-        print('emptying cache')
-        torch.cuda.empty_cache()
-        print('initial summary')
-        print(torch.cuda.memory_summary(device=device, abbreviated=False))
 
         # convert numpy array to pytorch tensor format
         frame_torch, _ = image_to_torch(frame, device=device)
