@@ -220,12 +220,6 @@ end_col = start_col + 512
 
 current_frame_index = 0
 
-print('memory allocated before: ', torch.cuda.memory_allocated())
-print('max memory: ', torch.cuda.max_memory_allocated())
-print('emptying cache')
-torch.cuda.reset_max_memory_allocated()
-print('memory allocated after: ', torch.cuda.memory_allocated())
-
 with torch.cuda.amp.autocast(enabled=True):
     while (cap.isOpened()):
         # load frame-by-frame
@@ -235,10 +229,11 @@ with torch.cuda.amp.autocast(enabled=True):
         if frame is None or current_frame_index > frames_to_propagate:
             break
 
-        print('memory allocated: ', torch.cuda.memory_allocated())
+        print('memory allocated before: ', torch.cuda.memory_allocated())
         print('max memory: ', torch.cuda.max_memory_allocated())
         print('emptying cache')
-        torch.cuda.empty_cache()
+        torch.cuda.reset_max_memory_allocated()
+        print('memory allocated after: ', torch.cuda.memory_allocated())
         # convert numpy array to pytorch tensor format
         frame_torch, _ = image_to_torch(frame, device=device)
         print(frame_torch.shape)
