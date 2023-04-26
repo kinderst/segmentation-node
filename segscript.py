@@ -120,7 +120,7 @@ else:
     print("Failed to download video")
 
 input_file_name = './' + filename
-output_file_name = 'fromscriptdownload.avi'
+output_file_name = 'fromscriptdownloadagain.avi'
 
 torch.cuda.empty_cache()
 
