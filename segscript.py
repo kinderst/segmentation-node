@@ -123,8 +123,13 @@ model.load_weights('./deeplabv3weights.h5')
 
 
 def real_callback(ch, method, properties, body):
-    url = "https://storage.googleapis.com/team-seven-bucket/peoplestation.mp4"  # Replace with the actual URL of the video
-    filename = "theinputagain.mp4"  # Replace with the desired name of the video file
+    req = body.decode('utf-8')
+    print("Received message:", body.decode('utf-8'))
+    req_data = json.loads(req)
+    print(req_data["originalUrl"])
+    firebase_id = req_data["firebaseId"]
+    url = req_data["originalUrl"]  # Replace with the actual URL of the video
+    filename = firebase_id  # Replace with the desired name of the video file
 
     response = requests.get(url)
     if response.status_code == 200:
@@ -135,7 +140,7 @@ def real_callback(ch, method, properties, body):
         print("Failed to download video")
 
     input_file_name = './' + filename
-    output_file_name = 'fromscriptdownloadagain.avi'
+    output_file_name = 'output' + filename + '.avi'
 
     torch.cuda.empty_cache()
 
@@ -252,7 +257,7 @@ def callback(ch, method, properties, body):
 
 
 # start consuming messages
-channel.basic_consume(queue='test-queue', on_message_callback=callback, auto_ack=True)
+channel.basic_consume(queue='test-queue', on_message_callback=real_callback, auto_ack=True)
 print('Waiting for messages...')
 channel.start_consuming()
 
