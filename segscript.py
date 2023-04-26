@@ -214,7 +214,7 @@ cv2.destroyAllWindows()
 
 # Define the codec and create VideoWriter object
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec to be used
-out = cv2.VideoWriter('othertype.avi', cv2.VideoWriter_fourcc(*'MJPG'), 10.0, (IMAGE_SIZE, IMAGE_SIZE))  # Video file output name, codec, fps, and frame size
+out = cv2.VideoWriter('othertypewait.avi', cv2.VideoWriter_fourcc(*'MJPG'), 10.0, (IMAGE_SIZE, IMAGE_SIZE))  # Video file output name, codec, fps, and frame size
 
 torch.cuda.empty_cache()
 
