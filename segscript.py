@@ -166,22 +166,61 @@ model = DeeplabV3Plus(image_size=IMAGE_SIZE, num_classes=NUM_CLASSES)
 
 model.load_weights('./deeplabv3weights.h5')
 
-video_name = './video.mp4'
-mask_name = './first_frame.png'
+# video_name = './video.mp4'
+# mask_name = './first_frame.png'
+#
+# mask = np.array(Image.open(mask_name))
+# print(np.unique(mask))
+# num_objects = len(np.unique(mask)) - 1
 
-mask = np.array(Image.open(mask_name))
-print(np.unique(mask))
-num_objects = len(np.unique(mask)) - 1
+
+torch.cuda.empty_cache()
+
+#maybe get mask here, run thru video for one frame, do mask op
+cap = cv2.VideoCapture('./summervid.mp4')
+current_frame_index = 0
+while (cap.isOpened()):
+    # load frame-by-frame
+    _, frame = cap.read()
+    frame = frame[:IMAGE_SIZE, :IMAGE_SIZE, :]
+    if frame is None or current_frame_index > 0:
+        break
+
+    if current_frame_index == 0:
+        image_tensor = read_single_img(frame)
+        prediction_mask = infer(image_tensor=image_tensor, model=model)
+        mask = decode_segmentation_masks(prediction_mask, colormap, 20)
+        unique_colors = np.unique(mask.reshape(-1, mask.shape[2]), axis=0)
+        colormap = {}
+        for i in range(len(unique_colors)):
+            colormap[tuple(unique_colors[i])] = i
+
+        # Replace each pixel in the image with its corresponding colormap value
+        for i in range(mask.shape[0]):
+            for j in range(mask.shape[1]):
+                mask[i,j] = colormap[tuple(mask[i,j])]
+        flat_img = Image.fromarray(mask[:,:,0], mode='L')
+        mask = np.array(flat_img)
+        print('mask info:!')
+        print(mask.shape)
+        print(np.unique(mask))
+        num_objects = len(np.unique(mask)) - 1
+    current_frame_index += 1
+
+cv2.destroyAllWindows()
+
+
+
 
 # Define the codec and create VideoWriter object
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec to be used
-out = cv2.VideoWriter('whoreallyks.mp4', fourcc, 20.0, (480, 480))  # Video file output name, codec, fps, and frame size
+out = cv2.VideoWriter('realtryvid.mp4', fourcc, 20.0, (IMAGE_SIZE, IMAGE_SIZE))  # Video file output name, codec, fps, and frame size
 
 torch.cuda.empty_cache()
 
 processor = InferenceCore(network, config=config)
 processor.set_all_labels(range(1, num_objects+1))  # consecutive labels
-cap = cv2.VideoCapture(video_name)
+cap = cv2.VideoCapture('./summervid.mp4')
 
 # You can change these two numbers
 frames_to_propagate = 40
@@ -193,6 +232,7 @@ with torch.cuda.amp.autocast(enabled=True):
     while (cap.isOpened()):
         # load frame-by-frame
         _, frame = cap.read()
+        frame = frame[:IMAGE_SIZE, :IMAGE_SIZE, :]
         print(frame.shape)
         if frame is None or current_frame_index > frames_to_propagate:
             break
@@ -217,7 +257,7 @@ with torch.cuda.amp.autocast(enabled=True):
             visualization = overlay_davis(frame, prediction)
             #display(Image.fromarray(visualization))
             # Write the frame to the video file (must be square so write middle)
-            out.write(visualization[:, 187:667, :])
+            out.write(visualization)
 
         current_frame_index += 1
 out.release()
