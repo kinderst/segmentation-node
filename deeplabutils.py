@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
-
+import numpy as np
 
 def convolution_block(
         block_input,
@@ -70,7 +70,7 @@ def DeeplabV3Plus(image_size, num_classes):
 def read_single_img(img_param):
     image = tf.convert_to_tensor(img_param)
     image.set_shape([None, None, 3])
-    image = tf.image.resize(images=image, size=[IMAGE_SIZE, IMAGE_SIZE])
+    image = tf.image.resize(images=image, size=[512, 512])
     image = tf.keras.applications.resnet50.preprocess_input(image)
     return image
 
