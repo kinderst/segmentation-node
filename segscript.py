@@ -143,7 +143,7 @@ config = {
     'max_long_term_elements': 10000,
 }
 
-network = XMem(config, '.XMem/saves/XMem.pth').eval().to(device)
+network = XMem(config, './saves/XMem.pth').eval().to(device)
 
 # Loading the Colormap
 colormap = loadmat(
