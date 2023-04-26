@@ -122,12 +122,12 @@ def decode_segmentation_masks(mask, colormap_param, n_classes):
     return rgb
 
 
-if torch.cuda.is_available():
-    print('Using GPU')
-    device = 'cuda'
-else:
-    print('CUDA not available. Please connect to a GPU instance if possible.')
-    device = 'cpu'
+# if torch.cuda.is_available():
+#     print('Using GPU')
+#     device = 'cuda'
+# else:
+#     print('CUDA not available. Please connect to a GPU instance if possible.')
+#     device = 'cpu'
 
 device = 'cpu'
 
@@ -150,7 +150,7 @@ config = {
     'max_long_term_elements': 10000,
 }
 
-network = XMem(config, './saves/XMem.pth').eval().to(device)
+network = torch.load(XMem(config, './saves/XMem.pth'), map_location=torch.device('cpu')).eval().to(device)
 
 # Loading the Colormap
 colormap = loadmat(
@@ -177,7 +177,7 @@ num_objects = len(np.unique(mask)) - 1
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec to be used
 out = cv2.VideoWriter('whoreallyks.mp4', fourcc, 20.0, (480, 480))  # Video file output name, codec, fps, and frame size
 
-torch.cuda.empty_cache()
+#torch.cuda.empty_cache()
 
 processor = InferenceCore(network, config=config)
 processor.set_all_labels(range(1, num_objects+1))  # consecutive labels
@@ -189,37 +189,37 @@ visualize_every = 1
 
 current_frame_index = 0
 
-with torch.cuda.amp.autocast(enabled=True):
-    while (cap.isOpened()):
-        # load frame-by-frame
-        _, frame = cap.read()
-        print(frame.shape)
-        if frame is None or current_frame_index > frames_to_propagate:
-            break
+#with torch.cuda.amp.autocast(enabled=True):
+while (cap.isOpened()):
+    # load frame-by-frame
+    _, frame = cap.read()
+    print(frame.shape)
+    if frame is None or current_frame_index > frames_to_propagate:
+        break
 
-        # convert numpy array to pytorch tensor format
-        frame_torch, _ = image_to_torch(frame, device=device)
-        print(frame_torch.shape)
-        if current_frame_index == 0:
-            # initialize with the mask
-            mask_torch = index_numpy_to_one_hot_torch(mask, num_objects+1).to(device)
-            print(mask_torch.shape)
-            # the background mask is not fed into the model
-            prediction = processor.step(frame_torch, mask_torch[1:])
-        else:
-            # propagate only
-            prediction = processor.step(frame_torch)
+    # convert numpy array to pytorch tensor format
+    frame_torch, _ = image_to_torch(frame, device=device)
+    print(frame_torch.shape)
+    if current_frame_index == 0:
+        # initialize with the mask
+        mask_torch = index_numpy_to_one_hot_torch(mask, num_objects+1).to(device)
+        print(mask_torch.shape)
+        # the background mask is not fed into the model
+        prediction = processor.step(frame_torch, mask_torch[1:])
+    else:
+        # propagate only
+        prediction = processor.step(frame_torch)
 
-        # argmax, convert to numpy
-        prediction = torch_prob_to_numpy_mask(prediction)
+    # argmax, convert to numpy
+    prediction = torch_prob_to_numpy_mask(prediction)
 
-        if current_frame_index % visualize_every == 0:
-            visualization = overlay_davis(frame, prediction)
-            #display(Image.fromarray(visualization))
-            # Write the frame to the video file (must be square so write middle)
-            out.write(visualization[:, 187:667, :])
+    if current_frame_index % visualize_every == 0:
+        visualization = overlay_davis(frame, prediction)
+        #display(Image.fromarray(visualization))
+        # Write the frame to the video file (must be square so write middle)
+        out.write(visualization[:, 187:667, :])
 
-        current_frame_index += 1
+    current_frame_index += 1
 out.release()
 cv2.destroyAllWindows()
 
