@@ -146,7 +146,9 @@ config = {
     'max_long_term_elements': 10000,
 }
 
-network = torch.nn.DataParallel(XMem(config, './saves/XMem.pth')).eval().to(device)
+network = XMem(config, './saves/XMem.pth').eval()
+network = torch.nn.DataParallel(network)
+network.to(device)
 
 # Loading the Colormap
 colormap = loadmat(
