@@ -258,7 +258,7 @@ with torch.cuda.amp.autocast(enabled=True):
             #display(Image.fromarray(visualization))
             # Write the frame to the video file (must be square so write middle)
             out.write(visualization)
-
+        cv2.waitKey(10)
         current_frame_index += 1
 out.release()
 cv2.destroyAllWindows()
