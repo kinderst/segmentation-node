@@ -36,6 +36,10 @@ from tensorflow.keras import layers
 from gcloud import storage
 from oauth2client.service_account import ServiceAccountCredentials
 
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import firestore
+
 from deeplabutils import DeeplabV3Plus
 from deeplabutils import read_single_img
 from deeplabutils import infer
@@ -43,32 +47,27 @@ from deeplabutils import decode_segmentation_masks
 
 
 def setup_rabbitmq_parameters(username, password, host, port, virtual_host):
-    credentials = pika.PlainCredentials(username, password)
-    return pika.ConnectionParameters(host=host, port=port, credentials=credentials)
+    credentials_pika = pika.PlainCredentials(username, password)
+    return pika.ConnectionParameters(host=host, port=port, credentials=credentials_pika)
+
 
 def create_rabbitmq_channel(parameters):
     connection = pika.BlockingConnection(parameters)
     return connection.channel()
 
 
-
-credentials_dict = {
-    "type": "service_account",
-    "project_id": "single-verve-376219",
-    "private_key_id": "0861a030b2cda0feb576636cefe23744823d1baf",
-    "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCtb9s0iz9nIJ27\n7Z5Od06yB538MqCSs9PkfpxH/VG3jQbBz4tX5RayAbKmLxi3dYKVfnMKgXteC1e9\nxR75zOCVnr+zf7TVJb2w7eI+/yT1Sly6HwKJLZceEOHlGffXJ4/+ILSBCced3F8L\nahc9JS99Crz5tOHeVkRI7l068p3q3K3PRQ4t73VziptjJ8txNqffStipRXwkszBp\nncNa52bI5l/RUtRheIpa3fM0A2UNHmVp1MU2gl7/n0MHUgp4PqyDZh6flKTVjO8E\nMQfFfg/Tc/4F8XQTZdbtv0l4jLbnffIf0fmoj6Y8mnCXZQG9ml9Amrm6VJam8qF7\n6P6Byo8nAgMBAAECggEAFQ8HYT5lIOr7bAWimqlu4zv8iVJGX/m4yT48UJtoEC7t\n+ptuMmptEokVPYtrZ187z1YOtuBY7+bVrQOhyrf/LvubEDr55IWUHkcMGRUW0jfI\nwYqhXrGr7ykinJRGHRg/Kh6jfCWJWNgYrESh9LkupnKm1nUJldsIqIhUxqMN3KXi\nqg2g7r8AbRKKaHyocum95Jccxx/oZu/Gw1VcBoPTX6KEykPDEfdacrTA5WdBInS+\nGa/lupgHA4ETRfp7Mp/t6gKUBW7Nh/DSX4TawJR8uboEf0VFNYshK/7b8NKtWGTG\n49DYcYIAk6g0jgGh4J7UAZJOzkwkNcDq48l7S8r+NQKBgQDgMALfhjLKaKUu+Ouy\nMgpsaE/POb7HEsfaUYiGOSpb0Fa0JxtSll147rDHvjp5YFimlS/cZaf7ShkwFNsv\nBpwLkKVOHUMBiICGD6OVJMdKnK5r3hiJlW2seKsjkxtQjGH0S0auTYwqqKJs3c1J\nDYZ13ccauV0GX11Ohe7XlM/ZfQKBgQDGDD5/xzfkrKLxZH140wIP/b6PTqhbcmTj\nPYrDf2SLVYnh2QH63HsBJGWLxlYBQTqi+Q/My5W7ukg7i4qWoHz0j/j//jLZ+9JY\n9JPPErARqUa629GhQs/x/k1+pmJawYme8G3AzNYFw1TWPp0EbRNDoPBF84mSLltx\nqVFpuEIMcwKBgQCqMaisurtqUEE+xLhiQn0JSbN1FViQ1uAkDIvBojpXE3YPNDUY\n4JA7k7FfIjpQFOWYKV/5SK9bJSi0CNFRBQqH+RqVj79jtZYksFC2lAI70XDU8Pnd\n0TQ+oCkES9SLtNdUV6VkA/kqFXWhgk0rbXorlt9lmV1WziUOzLzCqvWUHQKBgB+N\nSdO/oGb9HgSJNvgt3dFAYsCgDnBrPCl734Sf4hvUp9/kW81knPAkpUzsbz1J8BaQ\nyXSeJp++4M0jwROYQ/AOk+Ps0psp5GwpovbFiml153/Tj4U6iLiMBDqeNWMyHEPH\nGCU0PRCz+usbFJbk7cHDfSQX1Z4FZqooCIFoSpWDAoGBAI5kMSq233s2LlSuHg/5\nE6ejBm8DohaqpcivDg25lQEzyKe/99sgadKMjyAOcn6PUzOoiYzRQEnTmBQHasoC\ntJ9yyvsz5Hd/N6XWPzS6QbpzWa3n5Tz7B1B2eRD8ja8Xnmr89xl+7AyvgjDsAqWC\nMp87Rp+cGWxho2ZbF5jA8fm/\n-----END PRIVATE KEY-----\n",
-    "client_email": "831716292954-compute@developer.gserviceaccount.com",
-    "client_id": "113749115267900798731",
-    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-    "token_uri": "https://oauth2.googleapis.com/token",
-    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/831716292954-compute%40developer.gserviceaccount.com"
-}
-credentials = ServiceAccountCredentials.from_json_keyfile_dict(
-    credentials_dict
+google_credentials = ServiceAccountCredentials.from_json_keyfile_dict(
+    './google-creds.json'
 )
-client = storage.Client(credentials=credentials, project='single-verve-376219')
+client = storage.Client(credentials=google_credentials, project='single-verve-376219')
 bucket = client.get_bucket('team-seven-bucket')
+
+# Use a service account.
+cred = credentials.Certificate('./team-seven-fire-firebase-admin.json')
+
+app = firebase_admin.initialize_app(cred)
+
+db = firestore.client()
 
 if torch.cuda.is_available():
     print('Using GPU')
