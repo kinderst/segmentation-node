@@ -162,12 +162,12 @@ model.load_weights('./deeplabv3weights.h5')
 
 # Define the codec and create VideoWriter object
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec to be used
-out = cv2.VideoWriter('testvide.mp4', fourcc, 20.0, (512, 512))
+out = cv2.VideoWriter('testvideoslol.mp4', fourcc, 20.0, (512, 512))
 
 torch.cuda.empty_cache()
 
 #maybe get mask here, run thru video for one frame, do mask op
-cap = cv2.VideoCapture('./kidthumb.mp4')
+cap = cv2.VideoCapture('./summervid.mp4')
 current_frame_index = 0
 
 num_objects = None
@@ -207,7 +207,7 @@ torch.cuda.empty_cache()
 
 processor = InferenceCore(network, config=config)
 processor.set_all_labels(range(1, num_objects+1)) # consecutive labels
-cap = cv2.VideoCapture('./kidthumb.mp4')
+cap = cv2.VideoCapture('./summervid.mp4')
 
 # You can change these two numbers
 frames_to_propagate = 30
@@ -224,7 +224,7 @@ with torch.cuda.amp.autocast(enabled=True):
     while (cap.isOpened()):
         # load frame-by-frame
         _, frame = cap.read()
-        frame = frame[start_row:end_row, start_col:end_col,:]
+        frame = frame[start_row:end_row, start_col:end_col, :]
         print(frame.shape)
         if frame is None or current_frame_index > frames_to_propagate:
             break
@@ -247,6 +247,7 @@ with torch.cuda.amp.autocast(enabled=True):
 
         if current_frame_index % visualize_every == 0:
             visualization = overlay_davis(frame, prediction)
+            #display(Image.fromarray(visualization))
             # Write the frame to the video file (must be square so write middle)
             out.write(visualization)
 
@@ -257,3 +258,5 @@ with torch.cuda.amp.autocast(enabled=True):
         current_frame_index += 1
 out.release()
 cv2.destroyAllWindows()
+
+torch.cuda.empty_cache()
