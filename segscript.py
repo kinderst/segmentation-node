@@ -121,7 +121,8 @@ model.load_weights('./deeplabv3weights.h5')
 # print(np.unique(mask))
 # num_objects = len(np.unique(mask)) - 1
 
-def real_callback():
+
+def real_callback(ch, method, properties, body):
     url = "https://storage.googleapis.com/team-seven-bucket/peoplestation.mp4"  # Replace with the actual URL of the video
     filename = "theinputagain.mp4"  # Replace with the desired name of the video file
 
@@ -246,6 +247,7 @@ print('queue declared')
 def callback(ch, method, properties, body):
     req = body.decode('utf-8')
     print("Received message:", body.decode('utf-8'))
+    print(req["originalUrl"])
 
 
 # start consuming messages
