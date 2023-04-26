@@ -136,6 +136,11 @@ def real_callback(ch, method, properties, body):
     url = req_data["originalUrl"]  # Replace with the actual URL of the video
     filename = firebase_id  # Replace with the desired name of the video file
 
+    doc_ref = db.collection(u'videos').document(u''+firebase_id)
+    doc_ref.set({
+        u'status': 'message received, beginning video download'
+    }, merge=True)
+
     response = requests.get(url)
     if response.status_code == 200:
         with open(filename, "wb") as f:
@@ -188,6 +193,9 @@ def real_callback(ch, method, properties, body):
 
     cv2.destroyAllWindows()
 
+    doc_ref.set({
+        u'status': 'video downloaded successfully, and mask created, beginning segmentation'
+    }, merge=True)
 
     # Define the codec and create VideoWriter object
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec to be used
@@ -240,6 +248,10 @@ def real_callback(ch, method, properties, body):
     out.release()
     cv2.destroyAllWindows()
 
+    doc_ref.set({
+        u'status': 'finished segmentation, writing to bucket and cleaning up'
+    }, merge=True)
+
     print('writing to bucket')
     blob = bucket.blob(output_file_name)
     blob.upload_from_filename(output_file_name)
@@ -247,6 +259,11 @@ def real_callback(ch, method, properties, body):
     print('deleting from local storage')
     os.remove(input_file_name)
     os.remove(output_file_name)
+
+    doc_ref.set({
+        u'status': 'finished',
+        u'outputUrl': 'https://storage.googleapis.com/team-seven-bucket/' + output_file_name
+    }, merge=True)
 
 
 rabbitmq_params = setup_rabbitmq_parameters('seven', 'supersecret', '34.123.41.144', '5672', '')
