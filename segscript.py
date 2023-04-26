@@ -250,6 +250,7 @@ with torch.cuda.amp.autocast(enabled=True):
             print(mask_torch.shape)
             # the background mask is not fed into the model
             prediction = processor.step(frame_torch, mask_torch[1:])
+            del mask_torch
         else:
             # propagate only
             prediction = processor.step(frame_torch)
@@ -265,7 +266,6 @@ with torch.cuda.amp.autocast(enabled=True):
             out.write(visualization)
 
         del frame_torch
-        del mask_torch
         current_frame_index += 1
 out.release()
 cv2.destroyAllWindows()
