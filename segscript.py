@@ -166,81 +166,33 @@ model = DeeplabV3Plus(image_size=IMAGE_SIZE, num_classes=NUM_CLASSES)
 
 model.load_weights('./deeplabv3weights.h5')
 
+video_name = './video.mp4'
+mask_name = './first_frame.png'
+
+mask = np.array(Image.open(mask_name))
+print(np.unique(mask))
+num_objects = len(np.unique(mask)) - 1
+
 # Define the codec and create VideoWriter object
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec to be used
-out = cv2.VideoWriter('testvideoslol.mp4', fourcc, 20.0, (512, 512))
+out = cv2.VideoWriter('whoreallyks.mp4', fourcc, 20.0, (480, 480))  # Video file output name, codec, fps, and frame size
 
-torch.cuda.empty_cache()
-
-#maybe get mask here, run thru video for one frame, do mask op
-cap = cv2.VideoCapture('./summervid.mp4')
-current_frame_index = 0
-
-num_objects = None
-mask = None
-while (cap.isOpened()):
-    # load frame-by-frame
-    _, frame = cap.read()
-    if frame is None or current_frame_index > 0:
-        break
-
-    if current_frame_index == 0:
-        image_tensor = read_single_img(frame)
-        prediction_mask = infer(image_tensor=image_tensor, model=model)
-        mask = decode_segmentation_masks(prediction_mask, colormap, 20)
-        unique_colors = np.unique(mask.reshape(-1, mask.shape[2]), axis=0)
-        colormap = {}
-        for i in range(len(unique_colors)):
-            colormap[tuple(unique_colors[i])] = i
-
-
-        # Replace each pixel in the image with its corresponding colormap value
-        for i in range(mask.shape[0]):
-            for j in range(mask.shape[1]):
-                mask[i,j] = colormap[tuple(mask[i,j])]
-        flat_img = Image.fromarray(mask[:,:,0], mode='L')
-        mask = np.array(flat_img)
-        print(mask.shape)
-        print(np.unique(mask))
-        num_objects = len(np.unique(mask)) - 1
-    current_frame_index += 1
-
-out.release()
-cv2.destroyAllWindows()
-
-#clean up model cause we dont need any more
-del model
-gc.collect()
 torch.cuda.empty_cache()
 
 processor = InferenceCore(network, config=config)
-processor.set_all_labels(range(1, num_objects+1)) # consecutive labels
-cap = cv2.VideoCapture('./summervid.mp4')
+processor.set_all_labels(range(1, num_objects+1))  # consecutive labels
+cap = cv2.VideoCapture(video_name)
 
 # You can change these two numbers
-frames_to_propagate = 30
+frames_to_propagate = 40
 visualize_every = 1
 
-start_row = int((720 - 512) / 2)
-end_row = start_row + 512
-start_col = int((1280 - 512) / 2)
-end_col = start_col + 512
-
 current_frame_index = 0
-
-# print('memory allocated before: ', torch.cuda.memory_allocated())
-# print('max memory: ', torch.cuda.max_memory_allocated())
-# print('emptying cache')
-# torch.cuda.reset_max_memory_allocated()
-# print('memory allocated after: ', torch.cuda.memory_allocated())
-# print('initial summary')
-# print(torch.cuda.memory_summary(device=device, abbreviated=False))
 
 with torch.cuda.amp.autocast(enabled=True):
     while (cap.isOpened()):
         # load frame-by-frame
         _, frame = cap.read()
-        frame = frame[start_row:end_row, start_col:end_col, :]
         print(frame.shape)
         if frame is None or current_frame_index > frames_to_propagate:
             break
@@ -254,7 +206,6 @@ with torch.cuda.amp.autocast(enabled=True):
             print(mask_torch.shape)
             # the background mask is not fed into the model
             prediction = processor.step(frame_torch, mask_torch[1:])
-            del mask_torch
         else:
             # propagate only
             prediction = processor.step(frame_torch)
@@ -266,11 +217,40 @@ with torch.cuda.amp.autocast(enabled=True):
             visualization = overlay_davis(frame, prediction)
             #display(Image.fromarray(visualization))
             # Write the frame to the video file (must be square so write middle)
-            print('visualization shape: ', visualization.shape)
-            out.write(visualization)
+            out.write(visualization[:, 187:667, :])
 
-        del frame_torch
-        gc.collect()
         current_frame_index += 1
 out.release()
 cv2.destroyAllWindows()
+
+# num_objects = None
+# mask = None
+# while (cap.isOpened()):
+#     # load frame-by-frame
+#     _, frame = cap.read()
+#     if frame is None or current_frame_index > 0:
+#         break
+#
+#     if current_frame_index == 0:
+#         image_tensor = read_single_img(frame)
+#         prediction_mask = infer(image_tensor=image_tensor, model=model)
+#         mask = decode_segmentation_masks(prediction_mask, colormap, 20)
+#         unique_colors = np.unique(mask.reshape(-1, mask.shape[2]), axis=0)
+#         colormap = {}
+#         for i in range(len(unique_colors)):
+#             colormap[tuple(unique_colors[i])] = i
+#
+#
+#         # Replace each pixel in the image with its corresponding colormap value
+#         for i in range(mask.shape[0]):
+#             for j in range(mask.shape[1]):
+#                 mask[i,j] = colormap[tuple(mask[i,j])]
+#         flat_img = Image.fromarray(mask[:,:,0], mode='L')
+#         mask = np.array(flat_img)
+#         print(mask.shape)
+#         print(np.unique(mask))
+#         num_objects = len(np.unique(mask)) - 1
+#     current_frame_index += 1
+#
+# out.release()
+# cv2.destroyAllWindows()
