@@ -131,6 +131,7 @@ else:
 
 # set the amount of GPU memory to be used
 torch.cuda.set_per_process_memory_fraction(0.9)
+torch.backends.cuda.max_split_size_mb = 256
 
 torch.set_grad_enabled(False)
 
