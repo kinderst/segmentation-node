@@ -205,6 +205,8 @@ while (cap.isOpened()):
 out.release()
 cv2.destroyAllWindows()
 
+#clean up model cause we dont need any more
+del model
 
 torch.cuda.empty_cache()
 
