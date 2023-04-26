@@ -108,7 +108,7 @@ model.load_weights('./deeplabv3weights.h5')
 # print(np.unique(mask))
 # num_objects = len(np.unique(mask)) - 1
 
-url = "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"  # Replace with the actual URL of the video
+url = "https://storage.googleapis.com/team-seven-bucket/peoplestation.mp4"  # Replace with the actual URL of the video
 filename = "theinputagain.mp4"  # Replace with the desired name of the video file
 
 response = requests.get(url)
