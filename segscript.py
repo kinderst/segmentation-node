@@ -159,6 +159,10 @@ model = DeeplabV3Plus(image_size=IMAGE_SIZE, num_classes=NUM_CLASSES)
 
 model.load_weights('./deeplabv3weights.h5')
 
+# Define the codec and create VideoWriter object
+fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec to be used
+out = cv2.VideoWriter('testvide.mp4', fourcc, 20.0, (512, 512))
+
 torch.cuda.empty_cache()
 
 #maybe get mask here, run thru video for one frame, do mask op
@@ -196,10 +200,6 @@ while (cap.isOpened()):
 
 out.release()
 cv2.destroyAllWindows()
-
-# Define the codec and create VideoWriter object
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec to be used
-out = cv2.VideoWriter('testvide.mp4', fourcc, 20.0, (512, 512)) # Video file output name, codec, fps, and frame size
 
 
 torch.cuda.empty_cache()
