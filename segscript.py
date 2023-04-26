@@ -247,7 +247,8 @@ print('queue declared')
 def callback(ch, method, properties, body):
     req = body.decode('utf-8')
     print("Received message:", body.decode('utf-8'))
-    print(req["originalUrl"])
+    req_data = json.loads(req)
+    print(req_data["originalUrl"])
 
 
 # start consuming messages
