@@ -129,6 +129,9 @@ else:
     print('CUDA not available. Please connect to a GPU instance if possible.')
     device = 'cpu'
 
+# set the amount of GPU memory to be used
+torch.cuda.set_per_process_memory_fraction(0.9)
+
 torch.set_grad_enabled(False)
 
 # default configuration
