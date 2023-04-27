@@ -134,6 +134,9 @@ def real_callback(ch, method, properties, body):
     print(req_data["originalUrl"])
     firebase_id = req_data["firebaseId"]
     url = req_data["originalUrl"]  # Replace with the actual URL of the video
+    output_type = req_data["outputType"]
+    num_frames = req_data["numFrames"]
+    fps = req_data["fps"]
     filename = firebase_id  # Replace with the desired name of the video file
 
     doc_ref = db.collection(u'videos').document(u''+firebase_id)
@@ -150,7 +153,7 @@ def real_callback(ch, method, properties, body):
         print("Failed to download video")
 
     input_file_name = './' + filename
-    output_file_name = 'output' + filename + '.avi'
+    output_file_name = 'output' + filename + '.' + output_type
 
     torch.cuda.empty_cache()
 
@@ -197,9 +200,14 @@ def real_callback(ch, method, properties, body):
         u'status': 'video downloaded successfully, and mask created, beginning segmentation'
     }, merge=True)
 
-    # Define the codec and create VideoWriter object
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec to be used
-    out = cv2.VideoWriter(output_file_name, cv2.VideoWriter_fourcc(*'MJPG'), 10.0, (IMAGE_SIZE, IMAGE_SIZE))  # Video file output name, codec, fps, and frame size
+    fourcc = None
+    if output_type == 'mp4':
+        # Define the codec and create VideoWriter object
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec to be used
+    elif output_type == 'avi':
+        fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+
+    out = cv2.VideoWriter(output_file_name, fourcc, fps, (IMAGE_SIZE, IMAGE_SIZE))  # Video file output name, codec, fps, and frame size
 
     torch.cuda.empty_cache()
 
@@ -208,7 +216,7 @@ def real_callback(ch, method, properties, body):
     cap = cv2.VideoCapture(input_file_name)
 
     # You can change these two numbers
-    frames_to_propagate = 120
+    frames_to_propagate = numFrames
     visualize_every = 1
 
     current_frame_index = 0
