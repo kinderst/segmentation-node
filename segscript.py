@@ -216,7 +216,7 @@ def real_callback(ch, method, properties, body):
     cap = cv2.VideoCapture(input_file_name)
 
     # You can change these two numbers
-    frames_to_propagate = numFrames
+    frames_to_propagate = num_frames
     visualize_every = 1
 
     current_frame_index = 0
