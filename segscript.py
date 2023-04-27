@@ -135,7 +135,7 @@ def real_callback(ch, method, properties, body):
     req = body.decode('utf-8')
     print("Received message:", body.decode('utf-8'))
     req_data = json.loads(req)
-    firebase_id, url, output_type, num_frames, fps, filename = None
+    firebase_id, url, output_type, num_frames, fps, filename = None, None, None, None, None, None
     try:
         print(req_data["originalUrl"])
         firebase_id = req_data["firebaseId"]
