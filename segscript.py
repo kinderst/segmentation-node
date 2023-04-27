@@ -192,10 +192,18 @@ def real_callback(ch, method, properties, body):
     #maybe get mask here, run thru video for one frame, do mask op
     cap = cv2.VideoCapture(input_file_name)
     current_frame_index = 0
+    start_x, end_x, start_y, end_y = None, None, None, None
     while (cap.isOpened()):
         # load frame-by-frame
         _, frame = cap.read()
-        frame = frame[:IMAGE_SIZE, :IMAGE_SIZE, :]
+        middle_x = frame.shape[0] // 2
+        middle_y = frame.shape[1] // 2
+        start_x = middle_x - 256
+        end_x = middle_x + 256
+
+        start_y = middle_y - 256
+        end_y = middle_y + 256
+        frame = frame[start_x:end_x, start_y:end_y, :]
         if frame is None or current_frame_index > 0:
             break
 
@@ -259,7 +267,7 @@ def real_callback(ch, method, properties, body):
         while (cap.isOpened()):
             # load frame-by-frame
             _, frame = cap.read()
-            frame = frame[:IMAGE_SIZE, :IMAGE_SIZE, :]
+            frame = frame[start_x:end_x, start_y:end_y, :]
             print(frame.shape)
             if frame is None or current_frame_index > frames_to_propagate:
                 break
