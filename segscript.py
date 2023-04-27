@@ -45,6 +45,9 @@ from deeplabutils import read_single_img
 from deeplabutils import infer
 from deeplabutils import decode_segmentation_masks
 
+import gizeh
+from moviepy.editor import ImageSequenceClip
+
 
 def setup_rabbitmq_parameters(username, password, host, port, virtual_host):
     credentials_pika = pika.PlainCredentials(username, password)
@@ -249,7 +252,7 @@ def real_callback(ch, method, properties, body):
     visualize_every = 1
 
     current_frame_index = 0
-
+    img_arr = []
     with torch.cuda.amp.autocast(enabled=True):
         while (cap.isOpened()):
             # load frame-by-frame
@@ -280,6 +283,7 @@ def real_callback(ch, method, properties, body):
                 #display(Image.fromarray(visualization))
                 # Write the frame to the video file (must be square so write middle)
                 out.write(visualization)
+                img_arr.append(visualization)
 
             # every 10 frames, write to firestore the progress
             if current_frame_index % 10 == 0:
@@ -296,9 +300,14 @@ def real_callback(ch, method, properties, body):
         u'status': 'finished segmentation, writing to bucket and cleaning up'
     }, merge=True)
 
+    clip = ImageSequenceClip(img_arr, fps=24)
+    clip.write_videofile("yoolets.mp4")
+
     print('writing to bucket')
-    blob = bucket.blob(output_file_name)
-    blob.upload_from_filename(output_file_name)
+    # blob = bucket.blob(output_file_name)
+    # blob.upload_from_filename(output_file_name)
+    blob = bucket.blob('./yoolets.mp4')
+    blob.upload_from_filename('./yoolets.mp4')
 
     print('deleting from local storage')
     os.remove(input_file_name)
