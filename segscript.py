@@ -251,6 +251,13 @@ def real_callback(ch, method, properties, body):
                 #display(Image.fromarray(visualization))
                 # Write the frame to the video file (must be square so write middle)
                 out.write(visualization)
+
+            # every 10 frames, write to firestore the progress
+            if current_frame_index % 10 == 0:
+                doc_ref.set({
+                    u'status': 'segmented ' + str(current_frame_index) + '/' + str(frames_to_propagate) + ' frames'
+                }, merge=True)
+
             cv2.waitKey(10)
             current_frame_index += 1
     out.release()
@@ -273,6 +280,9 @@ def real_callback(ch, method, properties, body):
         u'outputUrl': 'https://storage.googleapis.com/team-seven-bucket/' + output_file_name
     }, merge=True)
 
+    # Acknowledge the message
+    ch.basic_ack(delivery_tag=method.delivery_tag)
+
 
 rabbitmq_params = setup_rabbitmq_parameters('seven', 'supersecret', '34.123.41.144', '5672', '')
 
@@ -293,7 +303,7 @@ def callback(ch, method, properties, body):
 
 
 # start consuming messages
-channel.basic_consume(queue='test-queue', on_message_callback=real_callback, auto_ack=True)
+channel.basic_consume(queue='test-queue', on_message_callback=real_callback)
 print('Waiting for messages...')
 channel.start_consuming()
 
