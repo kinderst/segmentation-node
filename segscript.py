@@ -146,6 +146,7 @@ def real_callback(ch, method, properties, body):
         filename = firebase_id  # Replace with the desired name of the video file
     except:
         # Acknowledge the message
+        print('bad message')
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     doc_ref = db.collection(u'videos').document(u''+firebase_id)
@@ -160,6 +161,7 @@ def real_callback(ch, method, properties, body):
             print(f"Video saved as {filename}")
     else:
         print("Failed to download video")
+        ch.basic_ack(delivery_tag=method.delivery_tag)
 
     input_file_name = './' + filename
     output_file_name = 'output' + filename + '.' + output_type
