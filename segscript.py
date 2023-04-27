@@ -236,7 +236,7 @@ def real_callback(ch, method, properties, body):
     if output_type == 'mp4':
         # Define the codec and create VideoWriter object
         #fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec to be used
-        fourcc = 'mpeg4'
+        fourcc = 'libx264'
     elif output_type == 'avi':
         #fourcc = cv2.VideoWriter_fourcc(*'MJPG')
         fourcc = 'rawvideo'
@@ -303,7 +303,7 @@ def real_callback(ch, method, properties, body):
     }, merge=True)
 
     clip = ImageSequenceClip(img_arr, fps=5)
-    clip.write_videofile(output_file_name, codec=fourcc)
+    clip.write_videofile(output_file_name)
 
     print('writing to bucket')
     blob = bucket.blob(output_file_name)
