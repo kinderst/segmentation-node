@@ -300,14 +300,14 @@ def real_callback(ch, method, properties, body):
         u'status': 'finished segmentation, writing to bucket and cleaning up'
     }, merge=True)
 
-    clip = ImageSequenceClip(img_arr, fps=24)
-    clip.write_videofile("./hmms.mp4")
+    clip = ImageSequenceClip(img_arr)
+    clip.write_videofile("hmmso.mp4")
 
     print('writing to bucket')
     # blob = bucket.blob(output_file_name)
     # blob.upload_from_filename(output_file_name)
-    blob = bucket.blob('./hmms.mp4')
-    blob.upload_from_filename('./hmms.mp4')
+    blob = bucket.blob('hmmso.mp4')
+    blob.upload_from_filename('hmmso.mp4')
 
     print('deleting from local storage')
     os.remove(input_file_name)
