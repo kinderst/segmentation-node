@@ -135,13 +135,18 @@ def real_callback(ch, method, properties, body):
     req = body.decode('utf-8')
     print("Received message:", body.decode('utf-8'))
     req_data = json.loads(req)
-    print(req_data["originalUrl"])
-    firebase_id = req_data["firebaseId"]
-    url = req_data["originalUrl"]  # Replace with the actual URL of the video
-    output_type = req_data["outputType"]
-    num_frames = req_data["numFrames"]
-    fps = req_data["fps"]
-    filename = firebase_id  # Replace with the desired name of the video file
+    firebase_id, url, output_type, num_frames, fps, filename = None
+    try:
+        print(req_data["originalUrl"])
+        firebase_id = req_data["firebaseId"]
+        url = req_data["originalUrl"]  # Replace with the actual URL of the video
+        output_type = req_data["outputType"]
+        num_frames = req_data["numFrames"]
+        fps = req_data["fps"]
+        filename = firebase_id  # Replace with the desired name of the video file
+    except:
+        # Acknowledge the message
+        ch.basic_ack(delivery_tag=method.delivery_tag)
 
     doc_ref = db.collection(u'videos').document(u''+firebase_id)
     doc_ref.set({
