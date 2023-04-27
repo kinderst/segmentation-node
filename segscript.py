@@ -149,6 +149,9 @@ def real_callback(ch, method, properties, body):
         print('bad message')
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
+    if fps < 1:
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+
     doc_ref = db.collection(u'videos').document(u''+firebase_id)
     doc_ref.set({
         u'status': 'message received, beginning video download'
@@ -162,9 +165,15 @@ def real_callback(ch, method, properties, body):
                 print(f"Video saved as {filename}")
         else:
             print("Failed to download video")
+            doc_ref.set({
+                u'status': 'failed, video download error'
+            }, merge=True)
             ch.basic_ack(delivery_tag=method.delivery_tag)
     except:
         print("bad video, exiting")
+        doc_ref.set({
+            u'status': 'failed, could not download video'
+        }, merge=True)
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     input_file_name = './' + filename
