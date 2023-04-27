@@ -149,7 +149,8 @@ def real_callback(ch, method, properties, body):
         print('bad message')
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
-    if fps < 1:
+    if not firebase_id or not url or not output_type or not num_frames or not fps or not filename:
+        print('something missing')
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     doc_ref = db.collection(u'videos').document(u''+firebase_id)
