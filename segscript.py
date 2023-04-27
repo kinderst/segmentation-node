@@ -53,9 +53,7 @@ def setup_rabbitmq_parameters(username, password, host, port, virtual_host):
     credentials_pika = pika.PlainCredentials(username, password)
     return pika.ConnectionParameters(host=host,
                                      port=port,
-                                     credentials=credentials_pika,
-                                     heartbeat=0,
-                                     blocked_connection_timeout=None)
+                                     credentials=credentials_pika)
 
 
 def create_rabbitmq_channel(parameters):
