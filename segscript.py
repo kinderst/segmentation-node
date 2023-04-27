@@ -154,13 +154,17 @@ def real_callback(ch, method, properties, body):
         u'status': 'message received, beginning video download'
     }, merge=True)
 
-    response = requests.get(url)
-    if response.status_code == 200:
-        with open(filename, "wb") as f:
-            f.write(response.content)
-            print(f"Video saved as {filename}")
-    else:
-        print("Failed to download video")
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            with open(filename, "wb") as f:
+                f.write(response.content)
+                print(f"Video saved as {filename}")
+        else:
+            print("Failed to download video")
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+    except:
+        print("bad video, exiting")
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
     input_file_name = './' + filename
