@@ -302,7 +302,7 @@ def real_callback(ch, method, properties, body):
         u'status': 'finished segmentation, writing to bucket and cleaning up'
     }, merge=True)
 
-    clip = ImageSequenceClip(img_arr, fps=5)
+    clip = ImageSequenceClip(img_arr, fps=fps)
     clip.write_videofile(output_file_name, codec=fourcc)
 
     print('writing to bucket')
@@ -342,11 +342,13 @@ def callback(ch, method, properties, body):
     req_data = json.loads(req)
     print(req_data["originalUrl"])
 
-
-# start consuming messages
-channel.basic_consume(queue='test-queue', on_message_callback=real_callback)
-print('Waiting for messages...')
-channel.start_consuming()
+try:
+    # start consuming messages
+    channel.basic_consume(queue='test-queue', on_message_callback=real_callback)
+    print('Waiting for messages...')
+    channel.start_consuming()
+except pika.exceptions.ConnectionClosed:
+    print("lost connection")
 
 # num_objects = None
 # mask = None
