@@ -322,6 +322,9 @@ print('channel created')
 channel.queue_declare(queue='test-queue', durable=True)
 print('queue declared')
 
+channel.queue_purge(queue='test-queue')
+print('cleared queue')
+
 
 # define callback function
 def callback(ch, method, properties, body):
