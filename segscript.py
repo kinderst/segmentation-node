@@ -148,10 +148,12 @@ def real_callback(ch, method, properties, body):
         # Acknowledge the message
         print('bad message')
         ch.basic_ack(delivery_tag=method.delivery_tag)
+        return
 
     if not firebase_id or not url or not output_type or not num_frames or not fps or not filename:
         print('something missing')
         ch.basic_ack(delivery_tag=method.delivery_tag)
+        return
 
     doc_ref = db.collection(u'videos').document(u''+firebase_id)
     doc_ref.set({
@@ -170,12 +172,14 @@ def real_callback(ch, method, properties, body):
                 u'status': 'failed, video download error'
             }, merge=True)
             ch.basic_ack(delivery_tag=method.delivery_tag)
+            return
     except:
         print("bad video, exiting")
         doc_ref.set({
             u'status': 'failed, could not download video'
         }, merge=True)
         ch.basic_ack(delivery_tag=method.delivery_tag)
+        return
 
     input_file_name = './' + filename
     output_file_name = 'output' + filename + '.' + output_type
