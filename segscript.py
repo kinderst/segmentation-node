@@ -52,7 +52,7 @@ def setup_rabbitmq_parameters(username, password, host, port, virtual_host):
                                      port=port,
                                      credentials=credentials_pika,
                                      heartbeat=0,
-                                     blocking_connection_timeout=None)
+                                     blocked_connection_timeout=None)
 
 
 def create_rabbitmq_channel(parameters):
