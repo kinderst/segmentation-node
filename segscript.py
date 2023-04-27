@@ -303,7 +303,7 @@ def real_callback(ch, method, properties, body):
     }, merge=True)
 
     clip = ImageSequenceClip(img_arr, fps=5)
-    clip.write_videofile(output_file_name)
+    clip.write_videofile(output_file_name, codec=fourcc)
 
     print('writing to bucket')
     blob = bucket.blob(output_file_name)
