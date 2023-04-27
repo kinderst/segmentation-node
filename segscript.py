@@ -301,13 +301,13 @@ def real_callback(ch, method, properties, body):
     }, merge=True)
 
     clip = ImageSequenceClip(img_arr, fps=24)
-    clip.write_videofile("yoolets.mp4")
+    clip.write_videofile("./hmms.mp4")
 
     print('writing to bucket')
     # blob = bucket.blob(output_file_name)
     # blob.upload_from_filename(output_file_name)
-    blob = bucket.blob('./yoolets.mp4')
-    blob.upload_from_filename('./yoolets.mp4')
+    blob = bucket.blob('./hmms.mp4')
+    blob.upload_from_filename('./hmms.mp4')
 
     print('deleting from local storage')
     os.remove(input_file_name)
