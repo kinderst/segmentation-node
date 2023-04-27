@@ -300,7 +300,7 @@ def real_callback(ch, method, properties, body):
         u'status': 'finished segmentation, writing to bucket and cleaning up'
     }, merge=True)
 
-    clip = ImageSequenceClip(img_arr)
+    clip = ImageSequenceClip(img_arr, fps=5)
     clip.write_videofile("hmmso.mp4")
 
     print('writing to bucket')
