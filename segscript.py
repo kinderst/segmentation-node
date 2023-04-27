@@ -239,7 +239,7 @@ def real_callback(ch, method, properties, body):
         fourcc = 'libx264'
     elif output_type == 'avi':
         #fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-        fourcc = 'rawvideo'
+        fourcc = 'png'
 
     #out = cv2.VideoWriter(output_file_name, fourcc, fps, (IMAGE_SIZE, IMAGE_SIZE))  # Video file output name, codec, fps, and frame size
 
