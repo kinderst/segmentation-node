@@ -235,11 +235,13 @@ def real_callback(ch, method, properties, body):
     fourcc = None
     if output_type == 'mp4':
         # Define the codec and create VideoWriter object
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec to be used
+        #fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec to be used
+        fourcc = 'mpeg4'
     elif output_type == 'avi':
-        fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+        #fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+        fourcc = 'rawvideo'
 
-    out = cv2.VideoWriter(output_file_name, fourcc, fps, (IMAGE_SIZE, IMAGE_SIZE))  # Video file output name, codec, fps, and frame size
+    #out = cv2.VideoWriter(output_file_name, fourcc, fps, (IMAGE_SIZE, IMAGE_SIZE))  # Video file output name, codec, fps, and frame size
 
     torch.cuda.empty_cache()
 
@@ -282,7 +284,7 @@ def real_callback(ch, method, properties, body):
                 visualization = overlay_davis(frame, prediction)
                 #display(Image.fromarray(visualization))
                 # Write the frame to the video file (must be square so write middle)
-                out.write(visualization)
+                #out.write(visualization)
                 img_arr.append(visualization)
 
             # every 10 frames, write to firestore the progress
@@ -293,7 +295,7 @@ def real_callback(ch, method, properties, body):
 
             cv2.waitKey(10)
             current_frame_index += 1
-    out.release()
+    #out.release()
     cv2.destroyAllWindows()
 
     doc_ref.set({
@@ -301,13 +303,11 @@ def real_callback(ch, method, properties, body):
     }, merge=True)
 
     clip = ImageSequenceClip(img_arr, fps=5)
-    clip.write_videofile("hmmso.mp4")
+    clip.write_videofile(output_file_name)
 
     print('writing to bucket')
-    # blob = bucket.blob(output_file_name)
-    # blob.upload_from_filename(output_file_name)
-    blob = bucket.blob('hmmso.mp4')
-    blob.upload_from_filename('hmmso.mp4')
+    blob = bucket.blob(output_file_name)
+    blob.upload_from_filename(output_file_name)
 
     print('deleting from local storage')
     os.remove(input_file_name)
